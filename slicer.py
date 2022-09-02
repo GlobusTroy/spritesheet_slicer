@@ -21,9 +21,10 @@ def construct_output_sheet(images: Sequence[Image.Image]) -> Image.Image:
     """
     assert images 
     rows = args.rows_out
-    cols = len(images) / rows
+    cols = len(images) // rows
     w,h = images[0].size 
-    out = Image.new('RGB', size=(cols*w, rows*h))
+    w,h = int(w),int(h)
+    out = Image.new('RGBA', size=(cols*w, rows*h))
     for i, img in enumerate(images):
         out.paste(img, box=((i%cols)*w, (i//cols)*h))
     return out
@@ -37,34 +38,36 @@ def get_grid_cells(image: Image.Image, num_cols: int, num_rows: int) -> Sequence
     :return: List of spritesheet cells.
     """
     assert image
-    images = [None for _ in range(num_cols * num_rows)]
-    width = image.get_width / num_cols
-    height = image.get_height / num_rows
+    images = [None for _ in range(int(num_cols) * int(num_rows))]
+    image_width, image_height = image.size
+    width = image_width // num_cols
+    height = image_height // num_rows
     for i in range(len(images)):
         col = i % num_cols
         row = i // num_cols
         left = col * width
-        top = row * height
+        upper = row * height
         right = left + width
-        bottom = top + height
-        coords = (top,left,right,bottom)
-        sub_image = image.crop(coords)
-        images.append(sub_image)
+        lower = upper + height
+        coords = (left,upper,right,lower)
+        images[i] = image.copy().crop(coords)
     return images
 
 def parse_grid_size(grid_size_str: str, image_width: int, image_height: int) -> Tuple[int,int]:
     if ',' not in grid_size_str:
         pixels = int(grid_size_str)
-        return image_width / pixels, image_height / pixels
+        return int(image_width / pixels), int(image_height / pixels)
     else:
         dims = grid_size_str.split(',')
-        return dims[0], dims[1]
+        return int(dims[0]), int(dims[1])
 
 
 def parse_coord(coord_str: str, num_cols: int, to_tuple=False):    
     if ',' in coord_str:
         coords = coord_str.split(',')
-        coord_tuple = (int(coords[0]), int(coords[1]))
+        x_coord = num_cols - 1 if coords[1] == '$' else int(coords[1])
+        coord_tuple = x_coord, int(coords[0])
+        assert x_coord < num_cols
         return coord_tuple if to_tuple else grid_tuple_to_int(coord_tuple, num_cols)
     else:
         coord_int = int(coord_str)
@@ -81,8 +84,8 @@ def parse_grid_indices(query: str, num_cols: int) -> Sequence[int]:
         assert coords[0][0] < coords[1][0]
         assert coords[0][1] < coords[1][1]
         out = []
-        for y in range(coords[0][1], coords[1][1]):
-            for x in range(coords[0][0], coords[1][0]):
+        for y in range(coords[0][1], coords[1][1]+1):
+            for x in range(coords[0][0], coords[1][0]+1):
                 out.append(grid_tuple_to_int((x,y), num_cols)) 
         return out
     def reverse_box_select(coords, num_cols) -> Sequence[int]:
@@ -90,7 +93,7 @@ def parse_grid_indices(query: str, num_cols: int) -> Sequence[int]:
     def linear_select(coords, num_cols) -> Sequence[int]:
         start = grid_tuple_to_int(coords[0], num_cols)
         end = grid_tuple_to_int(coords[1], num_cols)
-        return [i for i in range(start, end)]
+        return [i for i in range(start, end+1)]
     def reverse_linear_select(coords, num_cols) -> Sequence[int]:
         return linear_select(coords, num_cols)[::-1]
     """
@@ -106,11 +109,11 @@ def parse_grid_indices(query: str, num_cols: int) -> Sequence[int]:
                   '->': linear_select,
                   '<-': reverse_linear_select}
     for token in query_tokens:
-        for delim, operation in operations:
+        for delim, operation in operations.items():
             if not delim in token:
                 continue
-            coords = (parse_coord(coord, num_cols, to_tuple=True) for coord in token.split(delim))
-            out.append(operation(coords, num_cols))
+            coords = [parse_coord(coord, num_cols, to_tuple=True) for coord in token.split(delim)]
+            out += operation(coords, num_cols)
             break
     return out
 
@@ -118,8 +121,9 @@ def parse_grid_indices(query: str, num_cols: int) -> Sequence[int]:
 if __name__ == '__main__':
     image = Image.open(args.input_file, 'r')
     num_cols, num_rows = parse_grid_size(args.grid_size, image.width, image.height)
+    indices_to_use = parse_grid_indices(args.query, num_cols)
+    print(indices_to_use)
     image_grid_arr = get_grid_cells(image, num_cols, num_rows)
-    indices_to_use = parse_grid_indices(args.query, num_cols, num_rows)
     images_to_use = [image_grid_arr[i] for i in indices_to_use]
-    construct_output_sheet(images_to_use).save(args.out)
-    
+    output = construct_output_sheet(images_to_use)    
+    output.save(args.out, format='png')

@@ -1,10 +1,13 @@
 # spritesheet_slicer
 
 # QUERY FORMAT
-* Coordinates can be specified as x,y or i. Grid coordinates or linear coordinate starting at the top left, left to right and down one row and back to the left side when reaching the end of the grid column-wise.
+* Coordinates can be specified as 
+    * ROW,COLUMN (0-indexed)
+        * '$' can be used to mean the last column in the row
+    * i (0-indexed linear number scanning Left to right, top to bottom). 
 * Separate tokens with ';'
 * Each token can be of any of the following forms (C = a coordinate):
-* * Excel range grid specification: C#C
-* * Excel range grid reverse ordering: C%C
-* * Left to right start to end: C->C
-* * Right to left end to start: C<-C
+    * Excel range grid specification: C#C
+    * Excel range grid reverse ordering: C%C
+    * Left to right start to end: C->C
+    * Right to left end to start: C<-C
