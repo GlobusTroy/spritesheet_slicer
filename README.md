@@ -9,14 +9,15 @@ Can be either:
 * an integer, specifying the number of pixels along the side of one square grid cell (rows/columns calculated automatically) 
 * a pair of integers, num_cols,num_rows specifying the size of the sprite sheet grid (pixel size calculated automatically)
 
-## Query Format
+### query
+* A string containing any number of query tokens separated by ';'.
+* A query has 2 coordinates and an operator in between them. Ex: 5->8
 * Coordinates can be specified as 
-    * ROW,COLUMN (0-indexed)
+    * ROW,COLUMN (0-indexed integers). Grid coordinates of cell
         * '$' can be used to mean the last column in the row
-    * i (0-indexed linear number scanning Left to right, top to bottom). 
-* Separate tokens with ';'
-* Each token can be of any of the following forms (C = a coordinate):
-    * Excel range grid specification: C#C
-    * Excel range grid reverse ordering: C%C
-    * Left to right start to end: C->C
-    * Right to left end to start: C<-C
+    * i (0-indexed integer). Index of cell if grid is scanned from left to right starting from the top row.
+* Operators:
+    * '#': Select a box of grid cells scanning left to right starting from the top. Ex: 2,2#4,4
+    * '%': Select a box of grid cells scanning right to left from bottom to top (reverse order '#')
+    * '->': Select all grid cells in a linear scan of the whole base grid, from the start coordinate to the end coordinate.
+    * '<-': Select all grid cells in a linear scan of the whole base grid, from the end coordinate to start coordinate in reverse (reverse order '->').
