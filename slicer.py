@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from typing import Sequence, Tuple
 import argparse
+from typing import Sequence, Tuple
 from PIL import Image
 
 
