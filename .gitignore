@@ -130,3 +130,6 @@ dmypy.json
 
 # Png files
 *.png
+
+# VS Code
+.vscode/
